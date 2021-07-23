@@ -18,6 +18,7 @@ class COCO:
     def __init__(self, database_dir:str = None, coco_path: str =  "captions_train2014.json", feature_path: str = "resnet18_features.pkl") -> None:
         self.annotation = None
         self.image_data = None
+        self.id_caption = None
         self.D = 200
         self.glove_database = GloveDatabase()
         if database_dir is None:
