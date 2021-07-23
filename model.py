@@ -10,7 +10,7 @@ class Model:
 
     def __call__(self, descriptors): 
         batch = self.dense1(descriptors)
-        return batch / mg.sqrt(mg.einsum("nd, nd -> n", batch, batch)).reshape(-1, 1)
+        return batch / mg.sqrt(mg.einsum("ij, ij -> i", batch, batch)).reshape(-1, 1)
 
     @property
     def parameters(self):
