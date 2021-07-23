@@ -8,6 +8,8 @@ from mynn.layers.dense import dense
 from mygrad.nnet.losses import margin_ranking_loss
 from model import Model
 from noggin import LiveLogger
+from noggin import plot_logger
+import pickle
 
 
 # embed the “true” image \-/
@@ -102,12 +104,24 @@ for EPOCH in range(EPOCHS):
             print(f'Val Loss: {loss.item()}')
             print(f'Val Accuracy: {acc}')
 
-           validation_logger.set_train_batch(dict(accuracy=acc, loss=loss), batch_size=BATCH_SIZE)
+        validation_logger.set_train_batch(dict(accuracy=acc, loss=loss), batch_size=1)
+        validation_logger.set_train_epoch()
 
     
     train_logger.set_train_epoch()
 
 model.save_model()
+
+train_plotter, train_fig, train_ax = plot_logger(train_logger)
+# validation_plotter, validation_plotter, validation_plotter = plot_logger(validation_logger)
+
+with open('logger.pkl', 'wb') as f:
+    pickle.dump(train_logger.to_dict(), f, protocol=-1)
+
+train_plotter.show()
+# validation_plotter.show()
+
+
 
 
 # logger.set_train_batch(dict(metric_a=0., metric_b=2.), batch_size=BATCH_SIZE)
