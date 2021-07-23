@@ -7,6 +7,7 @@ from mygrad.nnet.initializers import glorot_normal
 from mynn.layers.dense import dense
 from mygrad.nnet.losses import margin_ranking_loss
 from model import Model
+from noggin import LiveLogger
 
 
 # embed the “true” image \-/
@@ -18,6 +19,10 @@ coco_dataset = COCO(database_dir='database')
 
 annotations = coco_dataset.annotation
 
+train_logger = LiveLogger()
+validation_logger = LiveLogger()
+
+
 # print(f'annotations: {annotations}')
 
 model = Model()
@@ -25,22 +30,24 @@ model = Model()
 optim = SGD(model.parameters, learning_rate=0.001, momentum=0.9)
 
 
-EPOCHS = 500  # one just for testing
+EPOCHS = 5  # one just for testing
 BATCH_SIZE = 32
 MARGIN = 0.25
 
-train_size = 30_000
-val_size = 10_000
+train_size = 300000
+val_size = 100000
 train_inputs, train_captions, train_confusers = coco_dataset.generate_matrix(train_size)
 val_inputs, val_captions, val_confusers = coco_dataset.generate_matrix(val_size)
-loss_list = []
+
 
 for EPOCH in range(EPOCHS):
     idxs = np.arange(train_size)
     np.random.shuffle(idxs)
-    num_correct = 0
+    loss_list = []
+    acc_list = []
     
     for batch_cnt in range(0, train_size//BATCH_SIZE):
+        num_correct = 0
         
         batch_indices = idxs[batch_cnt*BATCH_SIZE : (batch_cnt + 1)*BATCH_SIZE]
         # print(type(batch_indices))
@@ -65,29 +72,43 @@ for EPOCH in range(EPOCHS):
         #confuser_similarity = mg.matmul(confuser_img_embedding, true_caption_embedding)
 
         loss = margin_ranking_loss(true_similarity, confuser_similarity,1, margin=MARGIN)
-        loss_list.append(loss)
+        loss_list.append(loss.item())
         loss.backward()
 
         optim.step()
 
         num_correct = np.sum(true_similarity > confuser_similarity)
-    
-    acc = (num_correct / BATCH_SIZE) * 100
+        acc = (num_correct / BATCH_SIZE) * 100
+        acc_list.append(acc)
 
-    if EPOCH % 50 == 0:
+        train_logger.set_train_batch(dict(accuracy=acc, loss=loss), batch_size=BATCH_SIZE)
+
+    if EPOCH % 1 == 0:
         print(f'EPOCH: {EPOCH}')
-        print(f'Accuracy: {acc}%, Loss: {np.mean(loss_list)}')
+        print(f'Accuracy: {np.mean(acc_list)}%, Loss: {np.mean(loss_list)}')
         
         with mg.no_autodiff:
             true_img_embedding = model(val_inputs)    
             confuser_img_embedding = model(val_confusers) 
             true_caption_embedding = val_captions
+
             true_similarity = np.einsum("ni,ni -> n", true_img_embedding, val_captions)
             confuser_similarity = np.einsum("ni,ni -> n", confuser_img_embedding, val_captions)
+
             loss = margin_ranking_loss(true_similarity, confuser_similarity,1, margin=MARGIN)
             num_correct = np.sum(true_similarity > confuser_similarity)
             acc = num_correct/true_similarity.shape[0]
+
             print(f'Val Loss: {loss.item()}')
             print(f'Val Accuracy: {acc}')
 
+           validation_logger.set_train_batch(dict(accuracy=acc, loss=loss), batch_size=BATCH_SIZE)
+
+    
+    train_logger.set_train_epoch()
+
 model.save_model()
+
+
+# logger.set_train_batch(dict(metric_a=0., metric_b=2.), batch_size=BATCH_SIZE)
+

@@ -1,6 +1,8 @@
+from InferenceDatabase import InferenceDatabase
 from pathlib import Path
 import json
 import pickle
+from typing import ValuesView
 import mygrad as mg
 from gensim.models import KeyedVectors
 import string
@@ -59,14 +61,16 @@ class COCO:
         for i in del_id:
             del self.image_data[i]
 
-    def vec2embed(self, model):
+    def get_inference_database(self, model):
+        image_data = {}
+        image_data = {image_id : {} for image_id in self.image_data.keys()}
         with mg.no_autodiff:
-            for image_id in self.image_data.keys():
-                vec = self.image_data[image_id]['feature_vector']
-                #print(vec.shape)
+            for image_id,values in self.image_data.items():
+                vec = values['feature_vector']
                 emb = model(vec[None,...])[0]
-                #print(emb.shape)
-                self.image_data[image_id]['image_embed'] = emb
+                image_data[image_id]['image_embed'] = emb
+                image_data[image_id]['url'] = values['url']
+        return InferenceDatabase(image_data)
 
     def save_database(self, dir_path: str = 'database'):
         with open(dir_path+'/image_data.txt','wb') as f:
