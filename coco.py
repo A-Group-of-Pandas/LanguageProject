@@ -50,7 +50,19 @@ class COCO:
 
         for i in del_id:
             del self.image_data[i]
- 
+    
+    def save_database(self, dir_path: str = 'database'):
+        with open(dir_path+'/image_data.txt','wb') as f:
+            pickle.dump(self.image_data, f)
+        with open(dir_path+'/annotation.txt','wb') as f:
+            pickle.dump(self.annotation, f)
+
+    def load_database(self, dir_path: str = 'database'):
+        with open(dir_path+'/image_data.txt','rb') as f:
+            self.image_data = pickle.load(f)
+        with open(dir_path+'/annotation.txt','rb') as f:
+            self.annotation = pickle.load(f)
+
     def get_data(self): 
         #image-ID -> shape-(512,) descriptor
         feature_values = [value['feature_vector'] for image_id,value in self.image_data.values()]
@@ -91,3 +103,6 @@ class COCO:
                 phrase_vector[i] += idf * word_vector
         norm_vector = np.sqrt(np.einsum("ij, ij -> i", phrase_vector, phrase_vector)).reshape(-1, 1)
         return norm_vector
+
+coco = COCO()
+coco.save_database()

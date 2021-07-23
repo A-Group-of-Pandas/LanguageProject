@@ -1,5 +1,5 @@
 from os import replace
-from coco import embed_caption, COCO
+from coco import COCO
 import numpy as np
 import mygrad as mg
 from mynn.optimizers.sgd import SGD
@@ -7,7 +7,7 @@ from mygrad.nnet.initializers import glorot_normal
 from mynn.layers.dense import dense
 from mygrad.nnet.losses import margin_ranking_loss
 from model import Model
-import noggin as lognog
+from noggin import create_plot
 
 
 # embed the “true” image \-/
@@ -18,9 +18,9 @@ import noggin as lognog
 coco_dataset = COCO()
 annotations = coco_dataset.annotation
 
-print(f'annotations: {annotations}')
+# print(f'annotations: {annotations}')
 
-model = Model()
+model = Model(512,200)
 # Make sure the optimizer is SGD!!
 optim = mg.SGD(model.parameters, learning_rate=0.1)
 

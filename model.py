@@ -5,7 +5,7 @@ import numpy as np
 
 # model.py
 class Model:
-    def __init__(self, descriptor_dims, image_embed_dims):
+    def __init__(self, descriptor_dims=512, image_embed_dims=200):
         self.dense1 = dense(descriptor_dims, image_embed_dims, weight_initializer = glorot_normal, bias=False)
 
     def __call__(self, descriptors): 

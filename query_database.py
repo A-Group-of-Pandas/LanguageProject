@@ -1,8 +1,9 @@
-from coco import embed_caption
+from coco import embed_caption, COCO
 import io
 import requests
 from PIL import Image
 from matplotlib.pyplot import imshow
+import numpy as np
 
 def download_image(img_url: str) -> Image:
     response = requests.get(img_url)
@@ -14,19 +15,18 @@ def query_database(query, k):
 # 2. Then we compute the dot product of this query’s embedding against all of our image embeddings in our database.
 # 3. Return the top k image ids.
 # 4. Use that to return the top k images. Maybe we write a function to convert the image ids back to image? idk
-    coco = Coco()
+    coco = COCO()
     image_data = coco.image_data
     image_embeddings = [data["feature_vector"] for data in image_data.values()]
     query_word_embedding = embed_caption(query)
-    dot_product = np.dot(image_embeddings, )
+    dot_product = np.dot(image_embeddings, query_word_embedding)
     # Get the indices for the maximum value. Make sure to get the corresponding image ids using these indices.
-    sorted_dot_indxs = arr.argsort()[-k:][::-1]
+    sorted_dot_indxs = dot_product.argsort()[-k:][::-1]
     for i in sorted_dot_indxs:
         # get the image IDs
         top_ID = image_data.keys()[i]
         # get url from COCO data
         url = image_data[top_ID]["url"]
-        #self.image_data = {image['id'] : {'url': image['coco_url'],'captions':[]} for image in image_data}
         # show image
         img = download_image(url)
         imshow(img)
