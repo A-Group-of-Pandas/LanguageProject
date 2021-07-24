@@ -20,9 +20,9 @@ class COCO:
         self.image_data = None
         self.id_caption = None
         self.D = 200
-        self.glove_database = GloveDatabase()
         if database_dir is None:
             print('creating database')
+            self.glove_database = GloveDatabase()
             self.read_data(coco_path,feature_path)
         else:
             print('loading database')
@@ -38,14 +38,14 @@ class COCO:
         annotation = coco_data['annotations']
         caption_strings = [caption_info['caption'] for caption_info in annotation]
         self.id_caption = {caption_info['image_id']  : {'caption_id': caption_info['id'], 'captions': captions} for caption_info,captions in zip(annotation,caption_strings)} 
-        
+        #print(self.id_caption[0])
         captions = self.glove_database.embed_captions(caption_strings)
         self.annotation = {caption_info['id'] : {'image_id': caption_info['image_id'], 'caption': caption} for caption_info,caption in zip(annotation,captions)}        
         image_data = coco_data['images']
         self.image_data = {image['id'] : {'url': image['coco_url'],'captions':[]} for image in image_data}
         # image_data stores url (ID) --> captions (empty)
         
-        for i,captions in self.annotation.items():
+        for i, captions in self.annotation.items():
             #print(captions['image_id'], len(self.image_data))
             self.image_data[captions['image_id']]['captions'].append(i)
             # image_data now stores url (ID) --> captions
@@ -76,7 +76,7 @@ class COCO:
             self.image_data = pickle.load(f)
         with open(dir_path+'/annotation.txt','rb') as f:
             self.annotation = pickle.load(f)
-        self.glove_database.load_database()
+        #self.glove_database.load_database()
 
     def generate_matrix(self, triplet_size: int):
         image_ids = list(self.image_data.keys())
@@ -99,7 +99,7 @@ class COCO:
         chosen_confuser_ids = np.random.choice(image_ids,size=triplet_size,replace=True)
         chosen_images = [self.image_data[image_id]['url'] for image_id in chosen_image_ids]
         chosen_confusers = [self.image_data[image_id]['url'] for image_id in chosen_confuser_ids]
-        chosen_captions = [self.annotation[np.random.choice(self.id_caption[image_id]['captions'])] for image_id in chosen_image_ids]
+        chosen_captions = [self.id_caption[image_id]['captions'] for image_id in chosen_image_ids]
         #print('caption size: ' +str(self.annotation[658288]['caption']))
         return np.array(chosen_images), np.array(chosen_captions), np.array(chosen_confusers)
 

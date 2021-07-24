@@ -3,6 +3,7 @@ from coco import COCO
 import numpy as np
 import mygrad as mg
 from mynn.optimizers.sgd import SGD
+from mynn.optimizers.adam import Adam
 from mygrad.nnet.initializers import glorot_normal
 from mynn.layers.dense import dense
 from mygrad.nnet.losses import margin_ranking_loss
@@ -29,20 +30,21 @@ validation_logger = LiveLogger()
 
 model = Model()
 # Make sure the optimizer is SGD!!
-optim = SGD(model.parameters, learning_rate=0.001, momentum=0.9)
+#optim = SGD(model.parameters, learning_rate=0.001, momentum=0.9)
+optim = Adam(model.parameters)
 
-
-EPOCHS = 5  # one just for testing
+EPOCHS = 50  # one just for testing
 BATCH_SIZE = 32
 MARGIN = 0.25
 
-train_size = 300000
-val_size = 100000
-train_inputs, train_captions, train_confusers = coco_dataset.generate_matrix(train_size)
-val_inputs, val_captions, val_confusers = coco_dataset.generate_matrix(val_size)
+train_size = 30000
+val_size = 10000
 
 
 for EPOCH in range(EPOCHS):
+    train_inputs, train_captions, train_confusers = coco_dataset.generate_matrix(train_size)
+    val_inputs, val_captions, val_confusers = coco_dataset.generate_matrix(val_size)
+
     idxs = np.arange(train_size)
     np.random.shuffle(idxs)
     loss_list = []
@@ -72,7 +74,8 @@ for EPOCH in range(EPOCHS):
         #true_similarity = mg.matmul(true_img_embedding, true_caption_embedding)
         confuser_similarity = mg.einsum("ni,ni -> n", confuser_img_embedding, true_caption_embedding)
         #confuser_similarity = mg.matmul(confuser_img_embedding, true_caption_embedding)
-
+        print(f'true similarity: {np.mean(true_similarity)}')
+        print(f'confuser similarity: {np.mean(confuser_similarity)}')
         loss = margin_ranking_loss(true_similarity, confuser_similarity,1, margin=MARGIN)
         loss_list.append(loss.item())
         loss.backward()

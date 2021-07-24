@@ -24,9 +24,10 @@ class GloveDatabase:
     def load_database(self, dir_path:str = 'database'):
         with open(dir_path+'/glove_database.txt','rb') as f:
             self.counter,self.total_caption = pickle.load(f)
-        print(self.counter['dog'])
 
     def embed_caption(self, caption):
+        punc_regex = re.compile('[{}]'.format(re.escape(string.punctuation)))
+        caption = punc_regex.sub('', caption.lower()).split()
         phrase_vector = np.zeros((1,self.D))
         for word in caption:
             if word in self.counter:
@@ -42,11 +43,11 @@ class GloveDatabase:
     # captions - all captions in COCO dataset
     def embed_captions(self, captions):
         punc_regex = re.compile('[{}]'.format(re.escape(string.punctuation)))
-        captions = [punc_regex.sub('', caption.lower()).split() for caption in captions]
+        captions2 = [punc_regex.sub('', caption.lower()).split() for caption in captions]
         phrase_vector = np.zeros((len(captions),self.D))
         self.total_caption = len(captions)
         self.counter = Counter()
-        for caption in captions:
+        for caption in captions2:
             words = set(caption)
             for word in words:
                 self.counter[word]+=1
